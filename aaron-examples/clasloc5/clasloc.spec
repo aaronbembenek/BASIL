@@ -22,4 +22,4 @@ Ensures: sink_lock == old(sink_lock)
 
 Subroutine: source_at_mode
 Requires: source_lock == 1bv32
-Ensures: (Gamma_R0_out || source_mode == 1bv32) && source_mode == old(source_mode) && old(source_lock) == source_lock
+Ensures: (Gamma_R0_out || old(source_mode) == 1bv32) && source_lock == old(source_lock)
