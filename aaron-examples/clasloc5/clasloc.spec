@@ -8,10 +8,10 @@ source_lock: bv32
 
 L: public -> true, secret -> false, sink_mode -> true, source_mode -> true, sink_lock -> true, source_lock -> true
 
-Rely: (old(sink_lock) == 1bv32 ==> old(sink_mode) == sink_mode && sink_lock == 1bv32) &&
-        (old(source_lock) == 1bv32 ==> old(source_mode) == source_mode && source_lock == 1bv32)
-Guarantee: (old(sink_lock) == 2bv32 ==> old(sink_lock) == sink_lock && old(sink_mode) == sink_mode) &&
-        (old(source_lock) == 2bv32 ==> old(source_lock) == source_lock && old(source_mode) == source_mode)
+Rely: (old(sink_lock) == 1bv32 ==> old(sink_mode) == sink_mode && old(sink_lock) == sink_lock) &&
+        (old(source_lock) == 1bv32 ==> old(source_mode) == source_mode && old(source_lock) == source_lock)
+Guarantee: (old(sink_lock) != 0bv32 && old(sink_lock) != 1bv32 ==> old(sink_lock) == sink_lock && old(sink_mode) == sink_mode) &&
+        (old(source_lock) != 0bv32 && old(source_lock) != 1bv32 ==> old(source_lock) == source_lock && old(source_mode) == source_mode)
 
 Subroutine: unknown
 Ensures: Gamma_R0_out
