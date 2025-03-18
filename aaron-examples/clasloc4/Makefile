@@ -15,7 +15,7 @@ $(NAME).bpl: $(NAME).gts $(NAME).spec $(NAME).relf $(SOURCES)
 	mill run --input $(NAME).gts --relf $(NAME).relf --spec $(NAME).spec --output $@ $(BASIL_OPTS)
 
 %.gts: %.gtirb
-	gtirb-semantics $< $@ 
+	gtirb-semantics $< $@
 
 %.gtirb: %.out
 	ddisasm $< --ir $@
