@@ -6,16 +6,10 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int n;
-int v1;
-int v2;
-int v3;
-int x;
-int y;
 int main() {
-  ;
-  x = 1;
-  ;
+  int n, v1, v2, v3;
+  int x = 1;
+  int y;
   while (x <= n) {
     y = n - x;
     x = x + 1;

@@ -6,14 +6,10 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int i;
-int j;
-int c;
-int t;
 extern int unknown(void);
 int main() {
-  i = 0;
-  ;
+  int i = 0;
+  int j, c, t;
   while (my_unknown()) {
     if (c > 48) {
       if (c < 57) {

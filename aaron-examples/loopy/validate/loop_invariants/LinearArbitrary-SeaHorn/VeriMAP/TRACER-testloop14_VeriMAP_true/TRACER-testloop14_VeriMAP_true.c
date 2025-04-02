@@ -7,16 +7,13 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int i;
-int x;
-int y;
 extern unsigned int unknown_uint(void);
 void errorFn() {
 ERROR:
   goto ERROR;
 }
 int main() {
-  ;
+  int i, x, y;
   x = my_unknown();
   y = my_unknown();
   if (y <= 2) {

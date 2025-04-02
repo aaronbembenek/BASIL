@@ -6,20 +6,14 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int MAXPATHLEN;
-int pathbuf_off;
-int bound_off;
-int glob2_p_off;
-int glob2_pathbuf_off;
-int glob2_pathlim_off;
 extern int unknown_int(void);
 int main() {
-  ;
-  ;
-  ;
-  ;
-  ;
-  ;
+  int MAXPATHLEN;
+  int pathbuf_off;
+  int bound_off;
+  int glob2_p_off;
+  int glob2_pathbuf_off;
+  int glob2_pathlim_off;
   MAXPATHLEN = my_unknown();
   if (MAXPATHLEN > 0 && MAXPATHLEN < 2147483647)
     ;

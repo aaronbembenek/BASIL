@@ -27,6 +27,6 @@ $(NAME).bpl: $(NAME).gts $(NAME).spec $(NAME).relf $(SOURCES)
 	podman run --platform linux/amd64 --rm -v./:/host -w /host ghcr.io/uq-pac/basil-dev:latest aarch64-linux-gnu-gcc $(COMPILER_OPTS) $< -o $@
 
 clean:
-	rm -f $(NAME).relf $(NAME).gts $(NAME).bpl
+	rm -f *.relf *.gts *.bpl
 
 .PHONY: clean

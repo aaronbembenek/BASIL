@@ -6,21 +6,15 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int p;
-int i;
-int leader_len;
-int bufsize;
-int bufsize_0;
-int ielen;
 extern int unknown(void);
 extern int unknown();
 int main() {
-  ;
-  ;
-  leader_len = my_unknown();
-  bufsize = my_unknown();
-  bufsize_0 = my_unknown();
-  ielen = my_unknown();
+  int p;
+  int i;
+  int leader_len = my_unknown();
+  int bufsize = my_unknown();
+  int bufsize_0 = my_unknown();
+  int ielen = my_unknown();
   if (leader_len > 0)
     ;
   else

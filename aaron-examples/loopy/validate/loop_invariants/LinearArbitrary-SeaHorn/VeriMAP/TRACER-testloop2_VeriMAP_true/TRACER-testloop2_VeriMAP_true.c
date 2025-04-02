@@ -7,20 +7,15 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int NONDET;
-int i;
-int N;
-int a;
-int x;
 void errorFn() {
 ERROR:
   goto ERROR;
 }
 void main() {
-  ;
-  ;
-  ;
-  ;
+  int NONDET;
+  int i, N;
+  int a;
+  int x;
   if (my_unknown() > 0)
     x = 1;
   else

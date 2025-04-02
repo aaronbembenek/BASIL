@@ -7,9 +7,8 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int x;
 int main() {
-  x = 0;
+  int x = 0;
   while (1) {
     {
       ;

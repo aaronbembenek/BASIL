@@ -6,18 +6,13 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int x;
-int y;
-int z1;
-int z2;
-int z3;
 extern int unknown(void);
 int main() {
-  ;
-  ;
-  ;
-  ;
-  ;
+  int x;
+  int y;
+  int z1;
+  int z2;
+  int z3;
   assume((x >= 0));
   assume((x <= 2));
   assume((y <= 2));

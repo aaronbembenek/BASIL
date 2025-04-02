@@ -7,18 +7,13 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int in;
-int inlen;
-int bufferlen;
-int buf;
-int buflim;
 extern int unknown_int(void);
 int main() {
-  ;
-  inlen = my_unknown();
-  bufferlen = my_unknown();
-  ;
-  ;
+  int in;
+  int inlen = my_unknown();
+  int bufferlen = my_unknown();
+  int buf;
+  int buflim;
   if (bufferlen > 1)
     ;
   else

@@ -7,13 +7,10 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int lo;
-int mid;
-int hi;
 #define LARGE_INT 1000000
 extern int unknown_int(void);
 int main() {
-  ;
+  int lo, mid, hi;
   lo = 0;
   mid = my_unknown();
   if (!(mid > 0 && mid <= LARGE_INT))

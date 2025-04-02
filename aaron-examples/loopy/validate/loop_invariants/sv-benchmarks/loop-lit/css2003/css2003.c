@@ -6,13 +6,10 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int i;
-int j;
-int k;
 #define LARGE_INT 1000000
 extern int unknown_int(void);
 int main() {
-  ;
+  int i, j, k;
   i = 1;
   j = 1;
   k = my_unknown();

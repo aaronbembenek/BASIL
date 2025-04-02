@@ -6,17 +6,11 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-unsigned int n;
-unsigned int i;
-unsigned int k;
-unsigned int j;
-unsigned int l;
-unsigned int v4;
 extern unsigned int unknown_uint(void);
 int SIZE = 20000001;
 int main() {
-  n = 0, i = 0, k = 0, j = 0, l = 0;
-  v4 = 0;
+  unsigned int n = 0, i = 0, k = 0, j = 0, l = 0;
+  unsigned int v4 = 0;
   n = my_unknown();
   if (!(n <= SIZE))
     return 0;

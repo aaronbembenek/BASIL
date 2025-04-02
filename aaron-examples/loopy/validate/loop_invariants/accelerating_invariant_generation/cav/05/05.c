@@ -6,13 +6,8 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int x;
-int flag;
-int y;
-int j;
-int i;
 int unknown1() {
-  ;
+  int x;
   return x;
   ;
 }
@@ -20,11 +15,11 @@ int unknown2();
 int unknown3();
 int unknown4();
 void main() {
-  flag = my_unknown();
-  x = 0;
-  y = 0;
-  j = 0;
-  i = 0;
+  int flag = my_unknown();
+  int x = 0;
+  int y = 0;
+  int j = 0;
+  int i = 0;
   while (my_unknown()) {
     x++;
     y++;

@@ -7,11 +7,9 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int i;
-int a;
 int main() {
-  i = 0;
-  a = 0;
+  int i = 0;
+  int a = 0;
   while (1) {
     if (i == 20) {
       goto LOOPEND;

@@ -6,23 +6,16 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int I;
-int Sa;
-int Ea;
-int Ma;
-int Sb;
-int Eb;
-int Mb;
 extern int unknown_int(void);
 int nondet_int();
 int main() {
-  ;
-  ;
-  ;
-  ;
-  ;
-  ;
-  ;
+  int I;
+  int Sa;
+  int Ea;
+  int Ma;
+  int Sb;
+  int Eb;
+  int Mb;
   if (!(I >= 1))
     return 0;
   ;

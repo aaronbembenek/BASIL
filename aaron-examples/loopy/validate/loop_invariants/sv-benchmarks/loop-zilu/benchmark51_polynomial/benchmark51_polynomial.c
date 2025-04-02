@@ -6,12 +6,11 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int x;
 extern int unknown_int(void);
 extern _Bool unknown_bool(void);
 #include <assert.h>
 int main() {
-  x = my_unknown();
+  int x = my_unknown();
   if (!((x >= 0) && (x <= 50)))
     return 0;
   ;

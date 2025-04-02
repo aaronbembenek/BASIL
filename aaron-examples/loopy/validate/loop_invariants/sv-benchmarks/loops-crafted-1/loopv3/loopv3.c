@@ -6,12 +6,10 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int i;
-int j;
 extern int unknown_int(void);
 int SIZE = 50000001;
 int main() {
-  ;
+  int i, j;
   i = 0;
   j = 0;
   while (i < SIZE) {

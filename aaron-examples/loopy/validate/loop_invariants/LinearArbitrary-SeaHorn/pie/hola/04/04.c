@@ -6,11 +6,9 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int x;
-int y;
 extern int unknown1();
 void main() {
-  ;
+  int x, y;
   x = -50;
   while (x < 0) {
     x = x + y;

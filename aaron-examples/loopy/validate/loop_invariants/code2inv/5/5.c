@@ -6,14 +6,10 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int x;
-int size;
-int y;
-int z;
 int main() {
-  x = 0;
-  ;
-  ;
+  int x = 0;
+  int size;
+  int y, z;
   while (x < size) {
     x += 1;
     if (z <= y) {

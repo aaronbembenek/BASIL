@@ -7,20 +7,16 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-unsigned char n;
-unsigned char v;
-unsigned int s;
-unsigned int i;
 extern unsigned char unknown_uchar(void);
 int main() {
-  n = my_unknown();
+  unsigned char n = my_unknown();
   if (n == 0) {
     return 0;
     ;
   }
-  v = 0;
-  s = 0;
-  i = 0;
+  unsigned char v = 0;
+  unsigned int s = 0;
+  unsigned int i = 0;
   while (i < n) {
     v = my_unknown();
     s += v;

@@ -6,15 +6,12 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int n;
-int sum;
-int i;
 extern int unknown_int(void);
 #include <assert.h>
 int main() {
-  n = my_unknown();
-  sum = my_unknown();
-  i = my_unknown();
+  int n = my_unknown();
+  int sum = my_unknown();
+  int i = my_unknown();
   if (!(n >= 0 && sum == 0 && i == 0))
     return 0;
   ;

@@ -6,13 +6,10 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int x;
-int m;
-int n;
 extern int unknown(void);
 extern int unknown();
 void main() {
-  ;
+  int x, m, n;
   n = my_unknown();
   x = 0;
   m = 0;

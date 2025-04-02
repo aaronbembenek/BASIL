@@ -7,15 +7,11 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int sn;
-unsigned int loop1;
-unsigned int n1;
-unsigned int x;
 extern unsigned int unknown_uint(void);
 int main() {
-  sn = 0;
-  loop1 = my_unknown(), n1 = my_unknown();
-  x = 0;
+  int sn = 0;
+  unsigned int loop1 = my_unknown(), n1 = my_unknown();
+  unsigned int x = 0;
   while (x < 1000000) {
     sn = sn + (2);
     x++;

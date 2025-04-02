@@ -6,9 +6,8 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-unsigned int x;
 int main() {
-  x = 0;
+  unsigned int x = 0;
   while (x < 0x0fffffff) {
     if (x < 0xfff0) {
       x++;

@@ -7,21 +7,15 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-int p;
-int i;
-int leader_len;
-int bufsize;
-int bufsize_0;
-int ielen;
 #define LARGE_INT 1000000
 extern int unknown_int(void);
 int main() {
-  ;
-  ;
-  ;
-  ;
-  ;
-  ;
+  int p;
+  int i;
+  int leader_len;
+  int bufsize;
+  int bufsize_0;
+  int ielen;
   leader_len = my_unknown();
   bufsize = my_unknown();
   ielen = my_unknown();

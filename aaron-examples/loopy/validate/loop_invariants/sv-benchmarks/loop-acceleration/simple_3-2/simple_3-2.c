@@ -6,12 +6,10 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-unsigned int x;
-unsigned short N;
 extern unsigned short unknown_ushort(void);
 int main() {
-  x = 0;
-  N = my_unknown();
+  unsigned int x = 0;
+  unsigned short N = my_unknown();
   while (x < N) {
     x += 2;
   }

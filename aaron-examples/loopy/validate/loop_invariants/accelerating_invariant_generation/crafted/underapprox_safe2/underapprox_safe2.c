@@ -7,11 +7,9 @@
 int my_nondet;
 int __attribute__((noinline)) my_unknown() { return my_nondet; }
 void __attribute__((noinline)) my_assert(int x) {}
-unsigned int x;
-unsigned int y;
 int main() {
-  x = 0;
-  y = 1;
+  unsigned int x = 0;
+  unsigned int y = 1;
   while (x < 6) {
     x++;
     y *= 2;
