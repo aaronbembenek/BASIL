@@ -1,5 +1,13 @@
 # BASIL (Boogie Analysis for Secure Information-Flow Logics)
 
+## [For Aaron] Useful Commands
+
+Run Frama-C's abstract interpreter to identify integer overflow:
+
+```bash
+for x in $(find aaron-examples/loopy -name "*.c") ; do echo $x,$(frama-c -eva $x 2>/dev/null | grep -c "integer overflow") ; done > eva-results.txt
+```
+
 ## About
 
 The BASIL tool generates semantically equivalent Boogie source files (`.bpl`) from AArch64/ARM64 
