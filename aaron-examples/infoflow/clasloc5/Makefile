@@ -12,7 +12,7 @@ COMPILER_OPTS=-O0 -fno-stack-protector -fno-plt -fno-pic -march=armv8.1-a
 all: $(NAME).relf $(NAME).gts $(NAME).bpl $(NAME)-dsa.bpl
 
 $(NAME)-dsa.bpl: $(NAME).gts $(NAME)-dsa.spec $(NAME).relf $(SOURCES)
-	mill run --input $(NAME).gts --relf $(NAME).relf --spec $(NAME).spec --output $@ $(BASIL_OPTS) --memory-regions dsa
+	mill run --input $(NAME).gts --relf $(NAME).relf --spec $(NAME)-dsa.spec --output $@ $(BASIL_OPTS) --memory-regions dsa
 
 $(NAME).bpl: $(NAME).gts $(NAME).spec $(NAME).relf $(SOURCES)
 	mill run --input $(NAME).gts --relf $(NAME).relf --spec $(NAME).spec --output $@ $(BASIL_OPTS)
