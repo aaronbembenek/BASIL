@@ -19,8 +19,6 @@ Ensures: Gamma_R0_out
 Subroutine: sink_at_mode
 Requires: (Gamma_R0_in || sink_mode == 1bv32) && sink_lock == 1bv32
 Ensures: sink_lock == old(sink_lock)
-Ensures DIRECT: "stack == memory_store32_le(old(stack), bvadd64(R31_in, 18446744073709551612bv64), memory_load32_le(stack, bvadd64(R31_in, 18446744073709551612bv64)))"
-Ensures DIRECT: "Gamma_stack == gamma_store32(old(Gamma_stack), bvadd64(R31_in, 18446744073709551612bv64), gamma_load32(Gamma_stack, bvadd64(R31_in, 18446744073709551612bv64)))"
 
 Subroutine: source_at_mode
 Requires: source_lock == 1bv32
