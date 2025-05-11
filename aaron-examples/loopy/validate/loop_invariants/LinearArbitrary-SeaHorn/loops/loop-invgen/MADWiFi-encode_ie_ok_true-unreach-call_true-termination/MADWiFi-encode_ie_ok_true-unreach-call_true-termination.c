@@ -4,18 +4,20 @@
 #define assume(e)                                                              \
   if (!(e))                                                                    \
     exit(-1);
-int my_nondet;
-int __attribute__((noinline)) my_unknown() { return my_nondet; }
-void __attribute__((noinline)) my_assert(int x) {}
+int __attribute__((noinline)) my_unknown() { return rand(); }
+void __attribute__((noinline)) my_assert(int x) {
+  while (!x)
+    ;
+}
 #define LARGE_INT 1000000
 extern int unknown_int(void);
 int main() {
-  int p;
-  int i;
-  int leader_len;
-  int bufsize;
-  int bufsize_0;
-  int ielen;
+  int p = (int)my_unknown();
+  int i = (int)my_unknown();
+  int leader_len = (int)my_unknown();
+  int bufsize = (int)my_unknown();
+  int bufsize_0 = (int)my_unknown();
+  int ielen = (int)my_unknown();
   leader_len = my_unknown();
   bufsize = my_unknown();
   ielen = my_unknown();

@@ -3,16 +3,19 @@
 #define assume(e)                                                              \
   if (!(e))                                                                    \
     exit(-1);
-int my_nondet;
-int __attribute__((noinline)) my_unknown() { return my_nondet; }
-void __attribute__((noinline)) my_assert(int x) {}
+int __attribute__((noinline)) my_unknown() { return rand(); }
+void __attribute__((noinline)) my_assert(int x) {
+  while (!x)
+    ;
+}
 extern int unknown_int(void);
 int main() {
   int y = my_unknown();
-  int lock, v1, v2, v3;
+  int lock = (int)my_unknown(), v1 = (int)my_unknown(), v2 = (int)my_unknown(),
+      v3 = (int)my_unknown();
   lock = 0;
   int x = my_unknown();
-  int input;
+  int input = (int)my_unknown();
   {
     lock = 1;
     x = y;

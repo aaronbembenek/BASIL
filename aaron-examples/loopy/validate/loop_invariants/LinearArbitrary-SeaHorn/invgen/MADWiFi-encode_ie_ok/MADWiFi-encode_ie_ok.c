@@ -3,14 +3,16 @@
 #define assume(e)                                                              \
   if (!(e))                                                                    \
     exit(-1);
-int my_nondet;
-int __attribute__((noinline)) my_unknown() { return my_nondet; }
-void __attribute__((noinline)) my_assert(int x) {}
+int __attribute__((noinline)) my_unknown() { return rand(); }
+void __attribute__((noinline)) my_assert(int x) {
+  while (!x)
+    ;
+}
 extern int unknown(void);
 extern int unknown();
 int main() {
-  int p;
-  int i;
+  int p = (int)my_unknown();
+  int i = (int)my_unknown();
   int leader_len = my_unknown();
   int bufsize = my_unknown();
   int bufsize_0 = my_unknown();

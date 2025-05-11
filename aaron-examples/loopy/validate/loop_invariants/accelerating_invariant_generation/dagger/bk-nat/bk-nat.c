@@ -3,16 +3,18 @@
 #define assume(e)                                                              \
   if (!(e))                                                                    \
     exit(-1);
-int my_nondet;
-int __attribute__((noinline)) my_unknown() { return my_nondet; }
-void __attribute__((noinline)) my_assert(int x) {}
+int __attribute__((noinline)) my_unknown() { return rand(); }
+void __attribute__((noinline)) my_assert(int x) {
+  while (!x)
+    ;
+}
 extern int unknown_int(void);
 int nondet_int();
 int main() {
-  int invalid;
-  int unowned;
-  int nonexclusive;
-  int exclusive;
+  int invalid = (int)my_unknown();
+  int unowned = (int)my_unknown();
+  int nonexclusive = (int)my_unknown();
+  int exclusive = (int)my_unknown();
   if (!(exclusive == 0))
     return 0;
   ;

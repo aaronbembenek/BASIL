@@ -3,19 +3,21 @@
 #define assume(e)                                                              \
   if (!(e))                                                                    \
     exit(-1);
-int my_nondet;
-int __attribute__((noinline)) my_unknown() { return my_nondet; }
-void __attribute__((noinline)) my_assert(int x) {}
+int __attribute__((noinline)) my_unknown() { return rand(); }
+void __attribute__((noinline)) my_assert(int x) {
+  while (!x)
+    ;
+}
 extern int unknown_int(void);
 int nondet_int();
 int main() {
-  int I;
-  int Sa;
-  int Ea;
-  int Ma;
-  int Sb;
-  int Eb;
-  int Mb;
+  int I = (int)my_unknown();
+  int Sa = (int)my_unknown();
+  int Ea = (int)my_unknown();
+  int Ma = (int)my_unknown();
+  int Sb = (int)my_unknown();
+  int Eb = (int)my_unknown();
+  int Mb = (int)my_unknown();
   if (!(I >= 1))
     return 0;
   ;

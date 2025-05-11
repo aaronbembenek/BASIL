@@ -4,9 +4,11 @@
 #define assume(e)                                                              \
   if (!(e))                                                                    \
     exit(-1);
-int my_nondet;
-int __attribute__((noinline)) my_unknown() { return my_nondet; }
-void __attribute__((noinline)) my_assert(int x) {}
+int __attribute__((noinline)) my_unknown() { return rand(); }
+void __attribute__((noinline)) my_assert(int x) {
+  while (!x)
+    ;
+}
 extern int unknown_int(void);
 extern unsigned int unknown_uint(void);
 extern _Bool unknown_bool(void);
@@ -14,7 +16,7 @@ int main() {
   unsigned int x1 = my_unknown(), x2 = my_unknown(), x3 = my_unknown();
   unsigned int d1 = 1, d2 = 1, d3 = 1;
   _Bool c1 = my_unknown(), c2 = my_unknown();
-  int v1, v2, v3;
+  int v1 = (int)my_unknown(), v2 = (int)my_unknown(), v3 = (int)my_unknown();
   while (x1 > 0 && x2 > 0 && x3 > 0) {
     if (c1)
       x1 = x1 - d1;

@@ -4,20 +4,22 @@
 #define assume(e)                                                              \
   if (!(e))                                                                    \
     exit(-1);
-int my_nondet;
-int __attribute__((noinline)) my_unknown() { return my_nondet; }
-void __attribute__((noinline)) my_assert(int x) {}
+int __attribute__((noinline)) my_unknown() { return rand(); }
+void __attribute__((noinline)) my_assert(int x) {
+  while (!x)
+    ;
+}
 int __BLAST_NONDET;
 int MAXPATHLEN;
 int main() {
-  int buf_off;
-  int pattern_off;
-  int bound_off;
-  int glob3_pathbuf_off;
-  int glob3_pathend_off;
-  int glob3_pathlim_off;
-  int glob3_pattern_off;
-  int glob3_dc;
+  int buf_off = (int)my_unknown();
+  int pattern_off = (int)my_unknown();
+  int bound_off = (int)my_unknown();
+  int glob3_pathbuf_off = (int)my_unknown();
+  int glob3_pathend_off = (int)my_unknown();
+  int glob3_pathlim_off = (int)my_unknown();
+  int glob3_pattern_off = (int)my_unknown();
+  int glob3_dc = (int)my_unknown();
   if (MAXPATHLEN > 0)
     ;
   else

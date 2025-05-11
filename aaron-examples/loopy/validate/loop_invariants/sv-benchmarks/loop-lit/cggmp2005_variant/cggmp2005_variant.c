@@ -3,13 +3,15 @@
 #define assume(e)                                                              \
   if (!(e))                                                                    \
     exit(-1);
-int my_nondet;
-int __attribute__((noinline)) my_unknown() { return my_nondet; }
-void __attribute__((noinline)) my_assert(int x) {}
+int __attribute__((noinline)) my_unknown() { return rand(); }
+void __attribute__((noinline)) my_assert(int x) {
+  while (!x)
+    ;
+}
 #define LARGE_INT 1000000
 extern int unknown_int(void);
 int main() {
-  int lo, mid, hi;
+  int lo = (int)my_unknown(), mid = (int)my_unknown(), hi = (int)my_unknown();
   lo = 0;
   mid = my_unknown();
   if (!(mid > 0 && mid <= LARGE_INT))

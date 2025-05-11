@@ -3,17 +3,19 @@
 #define assume(e)                                                              \
   if (!(e))                                                                    \
     exit(-1);
-int my_nondet;
-int __attribute__((noinline)) my_unknown() { return my_nondet; }
-void __attribute__((noinline)) my_assert(int x) {}
+int __attribute__((noinline)) my_unknown() { return rand(); }
+void __attribute__((noinline)) my_assert(int x) {
+  while (!x)
+    ;
+}
 extern int unknown_int(void);
 int main() {
-  int MAXPATHLEN;
-  int pathbuf_off;
-  int bound_off;
-  int glob2_p_off;
-  int glob2_pathbuf_off;
-  int glob2_pathlim_off;
+  int MAXPATHLEN = (int)my_unknown();
+  int pathbuf_off = (int)my_unknown();
+  int bound_off = (int)my_unknown();
+  int glob2_p_off = (int)my_unknown();
+  int glob2_pathbuf_off = (int)my_unknown();
+  int glob2_pathlim_off = (int)my_unknown();
   MAXPATHLEN = my_unknown();
   if (MAXPATHLEN > 0 && MAXPATHLEN < 2147483647)
     ;
