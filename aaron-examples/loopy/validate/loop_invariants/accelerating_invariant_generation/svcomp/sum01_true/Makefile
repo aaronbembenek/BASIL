@@ -17,13 +17,8 @@ COMPILER_OPTS=-fno-stack-protector -fno-plt -fno-pic -march=armv8.1-a $(OPT)
 
 all: $(NAMEO).relf $(NAMEO).gts $(NAMEO).bpl
 
-dsa: $(NAMEO).relf $(NAMEO).gts $(NAMEO)-dsa.bpl
-
-$(NAMEO).bpl: $(NAMEO).gts $(NAME).spec $(NAMEO).relf $(SOURCES)
-	mill run --input $(NAMEO).gts --relf $(NAMEO).relf --spec $(NAME).spec --output $@ $(BASIL_OPTS)
-
-$(NAMEO)-dsa.bpl: $(NAMEO).gts $(NAME).spec $(NAMEO).relf $(SOURCES)
-	mill run --input $(NAMEO).gts --relf $(NAMEO).relf --spec $(NAME).spec --output $@ $(BASIL_OPTS) --memory-regions dsa
+$(NAMEO).bpl: $(NAMEO).gts $(NAMEO).spec $(NAMEO).relf $(SOURCES)
+	mill run --input $(NAMEO).gts --relf $(NAMEO).relf --spec $(NAMEO).spec --output $@ $(BASIL_OPTS)
 
 %.gts: %.gtirb
 	gtirb-semantics $< $@
