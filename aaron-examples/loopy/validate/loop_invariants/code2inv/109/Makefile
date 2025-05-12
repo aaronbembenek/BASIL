@@ -15,7 +15,7 @@ SOURCES=$(shell find src/)
 BASIL_OPTS=--analyse --simplify
 COMPILER_OPTS=-fno-stack-protector -fno-plt -fno-pic -march=armv8.1-a $(OPT) -D__BASIL__
 
-all: $(NAMEO).relf $(NAMEO).gts $(NAMEO).bpl
+all: $(NAMEO).relf $(NAMEO).gts $(NAMEO).bpl $(NAME).ultimate.c
 
 $(NAMEO).bpl: $(NAMEO).gts $(NAMEO).spec $(NAMEO).relf $(SOURCES)
 	mill run --input $(NAMEO).gts --relf $(NAMEO).relf --spec $(NAMEO).spec --output $@ $(BASIL_OPTS)
@@ -28,6 +28,9 @@ $(NAMEO).bpl: $(NAMEO).gts $(NAMEO).spec $(NAMEO).relf $(SOURCES)
 
 %.relf: %.out
 	greadelf -r -s -W $< > $@
+
+%.ultimate.c: %.c
+	podman run --platform linux/amd64 --rm -v./:/host -w /host ghcr.io/uq-pac/basil-dev:latest aarch64-linux-gnu-gcc -E -P $< > $@
 
 %.$(OPT).out: %.c
 	podman run --platform linux/amd64 --rm -v./:/host -w /host ghcr.io/uq-pac/basil-dev:latest aarch64-linux-gnu-gcc $(COMPILER_OPTS) $< -o $@
