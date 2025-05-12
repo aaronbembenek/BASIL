@@ -13,7 +13,7 @@ NAME=$(ROOT_DIR)/$(BASE_NAME)
 NAMEO=$(NAME).$(OPT)
 SOURCES=$(shell find src/)
 BASIL_OPTS=--analyse --simplify
-COMPILER_OPTS=-fno-stack-protector -fno-plt -fno-pic -march=armv8.1-a $(OPT)
+COMPILER_OPTS=-fno-stack-protector -fno-plt -fno-pic -march=armv8.1-a $(OPT) -D__BASIL__
 
 all: $(NAMEO).relf $(NAMEO).gts $(NAMEO).bpl
 
@@ -35,4 +35,4 @@ $(NAMEO).bpl: $(NAMEO).gts $(NAMEO).spec $(NAMEO).relf $(SOURCES)
 clean:
 	rm -f $(ROOT_DIR)/*.relf $(ROOT_DIR)/*.gts $(ROOT_DIR)/*.bpl
 
-.PHONY: clean all dsa
+.PHONY: clean all
