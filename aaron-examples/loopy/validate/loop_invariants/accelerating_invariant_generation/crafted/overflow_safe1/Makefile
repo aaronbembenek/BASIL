@@ -30,12 +30,12 @@ $(NAMEO).bpl: $(NAMEO).gts $(NAMEO).spec $(NAMEO).relf $(SOURCES)
 	greadelf -r -s -W $< > $@
 
 %.ultimate.c: %.c
-	podman run --platform linux/amd64 --rm -v./:/host -w /host ghcr.io/uq-pac/basil-dev:latest aarch64-linux-gnu-gcc -E -P $< > $@
+	podman run --platform linux/amd64 --rm -v./:/host -w /host ghcr.io/uq-pac/basil-dev:latest aarch64-linux-gnu-gcc -E -P $< >$@
 
 %.$(OPT).out: %.c
 	podman run --platform linux/amd64 --rm -v./:/host -w /host ghcr.io/uq-pac/basil-dev:latest aarch64-linux-gnu-gcc $(COMPILER_OPTS) $< -o $@
 
 clean:
-	rm -f $(ROOT_DIR)/*.relf $(ROOT_DIR)/*.gts $(ROOT_DIR)/*.bpl
+	rm -f $(ROOT_DIR)/*.relf $(ROOT_DIR)/*.gts $(ROOT_DIR)/*.bpl $(NAME).ultimate.c
 
 .PHONY: clean all
