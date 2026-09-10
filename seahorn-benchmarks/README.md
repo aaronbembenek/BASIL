@@ -42,6 +42,43 @@ descriptive/canonical name:
    false positives, which is why only exact (raw or preprocessed) hash matches were
    treated as redundant here.
 
+3. **Compiled `.text`** (`aarch64-linux-gnu-objcopy -O binary --only-section=.text`
+   on the `gcc -O0` build of each benchmark, then hash the extracted bytes) — catches
+   duplicates that differ only in ways `-O0` codegen normalizes away (macro vs. literal
+   use of the same constant, calling one nondet-alias macro vs. another that expands to
+   the same function, declaration order/style, dead/no-op code), which the preprocessed-
+   source hash above does not. Every one of the 13 raw hash-matches this pass found was
+   manually diffed at the source level before removing anything, since binary identity
+   doesn't always imply the pair is redundant for every tool (see the note below). 11
+   were confirmed as cosmetic-only duplicates and removed:
+
+   | kept | removed | raw source differed only by |
+   |---|---|---|
+   | `test/c/invgen/nested5/` | `test/c/pie/hola/24/` | a header/attribution comment; identical `tmpl(...)` logic |
+   | `test/c/loops/loop-invgen/sendmail-close-angle_true-unreach-call_true-termination/` | `test/c/invgen/sendmail-close-angle/` | dead commented-out historical code/annotations; live statements identical after macro expansion (`unknown()`/`sassert()` vs. their direct `__VERIFIER_*` expansions) |
+   | `test/c/loops/loops/trex03_true-unreach-call.i.annot/` | `test/c/pie/ICE/benchmarks/trex03_safe/` (itself the earlier survivor of the byte-for-byte pass above) | `/*@ predicates{...} @*/` CEGAR-template annotations present only in the kept copy; asserted property unchanged |
+   | `test/c/pie/ICE/benchmarks/dtuc/` | `test/c/pie/ICE/benchmarks/dutc/` | calls `unknown()` vs. `__VERIFIER_nondet_int()` directly — same macro, different alias |
+   | `test/c/pie/ICE/benchmarks/sum01_safe/` | `test/c/pie/ICE/benchmarks/sum01/` | `#define a (1)` then `n*a` vs. a literal `n*1`/`n` — algebraically identical |
+   | `test/c/pie/ICE/benchmarks/sum01_safe.v/` | `test/c/pie/ICE/benchmarks/sum01.v/` | same `a=1` macro-vs-literal pattern as above |
+   | `test/c/pie/ICE/benchmarks/trex03_safe.v/` | `test/c/pie/ICE/benchmarks/trex03.v/` | a declaration-order swap with no semantic content |
+   | `test/c/pie/hola/37/` | `test/demo/11/` | an attribution comment (`Taken from "Counterexample Driven Refinement for Abstract Interpretation" (TACAS'06) by Gulavani`) and `unknown2()` vs. `unknown1()` — both alias `__VERIFIER_nondet_int()` |
+   | `test/demo/23/` | `test/demo/31/` | two declaration statements merged into one comma-declaration |
+   | `test/sv-benchmarks/systemc/token_ring.12_.../` | `test/sv-benchmarks/systemc/token_ring.14_.../` | an extra `if (a<=5) { if (a>=5) {} }` with a completely empty body — dead code |
+   | `test/sv-benchmarks/systemc/token_ring.13_.../` | `test/sv-benchmarks/systemc/token_ring.15_.../` | the same empty-body dead-code pattern |
+
+   **2 of the 13 raw matches were *not* removed**, despite hashing identically:
+   `test/c/loops/loops/for_infinite_loop_1..._true-unreach-call_false-termination.i.annot/`
+   vs. `for_infinite_loop_2.../`, and the `while_infinite_loop_1`/`_2` pair. Both pairs'
+   source contains a genuinely different assertion (`__VERIFIER_assert(x == 0)` vs.
+   `__VERIFIER_assert(x != 0)`) — they only compile to identical `.text` because the
+   loop in question is provably infinite (per the benchmarks' own `_false-termination`
+   naming), so gcc treats the differing assert as unreachable dead code either way. This
+   is a deliberate SV-COMP test pattern (does a tool correctly avoid reporting an error
+   it can never reach, regardless of what that error checks), not accidental
+   duplication — a source-level tool that doesn't establish non-termination up front, or
+   that inspects the assert condition directly, could legitimately treat the two
+   differently, so compiled-binary identity alone isn't sufficient grounds for removal.
+
 ## Compile-stage fixes
 
 Every remaining benchmark now compiles cleanly under all 5 variants (`gcc`/`clang` ×
@@ -172,12 +209,12 @@ compiler problem. Two distinct bugs account for nearly all of them:
    downstream re-establishes one, `ReadUninitialised`'s single-pass (non-fixpoint)
    check can see the later read as undefined. **Unconfirmed** — worth testing against
    a BASIL build from just before `4efcd277` to verify. This is the dominant failure
-   mode in every variant: **100% of `gcc_O0` (573/573), `gcc_O2` (414/414), and
-   `gcc_O2_fwrapv` (417/417)** basil-stage failures, 573/575 (99.7%) of `clang_O0`'s,
-   and 683/966 (70.7%) of `clang_O2`'s.
+   mode in every variant: **100% of `gcc_O0` (573/573), `gcc_O2` (407/407), and
+   `gcc_O2_fwrapv` (410/410)** basil-stage failures, 573/575 (99.7%) of `clang_O0`'s,
+   and 674/956 (70.5%) of `clang_O2`'s.
 2. **`IntervalDSA.globalIntervals` assertion — `clang_O2`-specific.** An assertion in
    `src/main/scala/analysis/data_structure_analysis/IntervalDSA.scala:1533`
-   (`globalIntervals`) accounts for 272/966 (28.2%) of `clang_O2`'s basil-stage
+   (`globalIntervals`) accounts for 272/956 (28.5%) of `clang_O2`'s basil-stage
    failures, and does not occur even once across every other variant's failure logs
    — i.e. this isn't a general BASIL bug, it's specific to something in `clang -O2`'s
    codegen (vectorization, addressing-mode selection, and jump tables are the likely
@@ -185,8 +222,8 @@ compiler problem. Two distinct bugs account for nearly all of them:
    (`--dsa= --dsa-split --dsa-checks`). This area has had a cluster of recent bug-fix
    commits (`interval-dsa-recursion-fix`, `interval-dsa-bounds-check-fix`,
    `dsa-ssc-fixes`, PRs #428/#612/#613), consistent with `clang_O2` still having
-   unresolved edge cases — and is the main reason `clang_O2`'s pass rate (346/1314,
-   26%) sits so far below every other variant (56-68%).
+   unresolved edge cases — and is the main reason `clang_O2`'s pass rate (345/1303,
+   26%) sits so far below every other variant (56-69%).
 
 ## Running a benchmark through UAutomizer directly (source-level, no `-D__BASIL__`)
 
