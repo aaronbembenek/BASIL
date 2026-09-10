@@ -2,12 +2,12 @@ extern void __VERIFIER_error() __attribute__((__noreturn__));
 
 extern int __VERIFIER_nondet_int();
 
+void error(void) __attribute__((noreturn));
 void error(void) {
 
   {
   ERROR:
     __VERIFIER_error();
-    return;
   }
 }
 
@@ -74,20 +74,20 @@ void s_memory_write(int i, int v) {
 }
 
 void m_run(void) {
-  int d;
+  int d = __VERIFIER_nondet_int();
   int a;
   int req_type;
   int req_a;
   int req_d;
-  int rsp_type;
-  int rsp_status;
-  int rsp_d;
+  int rsp_type = __VERIFIER_nondet_int();
+  int rsp_status = __VERIFIER_nondet_int();
+  int rsp_d = __VERIFIER_nondet_int();
   int req_type___0;
   int req_a___0;
-  int req_d___0;
-  int rsp_type___0;
-  int rsp_status___0;
-  int rsp_d___0;
+  int req_d___0 = __VERIFIER_nondet_int();
+  int rsp_type___0 = __VERIFIER_nondet_int();
+  int rsp_status___0 = __VERIFIER_nondet_int();
+  int rsp_d___0 = __VERIFIER_nondet_int();
 
   {
     if ((int)m_run_pc == 0) {
@@ -812,12 +812,12 @@ static int rsp_t_type___0;
 static int rsp_t_status___0;
 static int rsp_t_d___0;
 void s_run(void) {
-  int req_type;
-  int req_a;
-  int req_d;
-  int rsp_type;
-  int rsp_status;
-  int rsp_d;
+  int req_type = __VERIFIER_nondet_int();
+  int req_a = __VERIFIER_nondet_int();
+  int req_d = __VERIFIER_nondet_int();
+  int rsp_type = __VERIFIER_nondet_int();
+  int rsp_status = __VERIFIER_nondet_int();
+  int rsp_d = __VERIFIER_nondet_int();
   int dummy;
 
   {

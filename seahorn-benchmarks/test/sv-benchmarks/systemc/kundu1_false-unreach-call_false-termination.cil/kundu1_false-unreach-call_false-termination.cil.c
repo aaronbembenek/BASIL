@@ -2,12 +2,12 @@ extern void __VERIFIER_error() __attribute__((__noreturn__));
 
 extern int __VERIFIER_nondet_int();
 
+void error(void) __attribute__((noreturn));
 void error(void) {
 
   {
   ERROR:
     __VERIFIER_error();
-    return;
   }
 }
 

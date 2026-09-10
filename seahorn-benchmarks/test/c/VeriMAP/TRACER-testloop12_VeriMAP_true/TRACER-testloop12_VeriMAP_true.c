@@ -12,7 +12,7 @@ ERROR:
 # 1 "<command-line>"
 # 1 "MAP/SAFE-exbench/TRACER-testloop12.tmp.c"
 # 25 "MAP/SAFE-exbench/TRACER-testloop12.tmp.c"
-int x = unknown();
+int x;
 
 int sel(int z) {
   int y;
