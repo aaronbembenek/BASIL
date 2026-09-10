@@ -166,7 +166,7 @@ void do_write_p(void) {
 }
 static int a_t;
 void do_read_c(void) {
-  int a;
+  int a = unknown();
 
   {
     if ((int)c_dr_pc == 0) {

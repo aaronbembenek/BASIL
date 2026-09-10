@@ -24,6 +24,10 @@ __attribute__((noinline)) int __VERIFIER_nondet_bool() {
     return __VERIFIER_nondet_int();
 }
 
+__attribute__((noinline)) char __VERIFIER_nondet_char() {
+    return (char)__VERIFIER_nondet_int();
+}
+
 __attribute__((noinline, noreturn)) void __VERIFIER_error()
 {
     while (1)

@@ -7,6 +7,9 @@ void __VERIFIER_assert1(int cond) {
 }
 int main(void) {
   char in[11]; // = "3277192070";
+  for (unsigned i = 0; i < 11; ++i) {
+    in[i] = __VERIFIER_nondet_char();
+  }
   char *s;
   unsigned char c;
   unsigned int i, j;

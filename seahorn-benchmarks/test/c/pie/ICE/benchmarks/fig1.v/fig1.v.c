@@ -13,7 +13,7 @@ void __VERIFIER_assert1(int cond) {
 int main() {
 
   int x = -50;
-  int y, v1, v2, v3;
+  int y = unknown(), v1, v2, v3;
 
   while (x < 0) {
     x = x + y;
