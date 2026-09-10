@@ -42,6 +42,50 @@ descriptive/canonical name:
    false positives, which is why only exact (raw or preprocessed) hash matches were
    treated as redundant here.
 
+## Compile-stage fixes
+
+Every remaining benchmark now compiles cleanly under all 5 variants (`gcc`/`clang` ×
+`-O0`/`-O2`, plus `gcc -O2 -fwrapv`) — 0 compile-stage failures, down from ~54 across
+16 files that had genuine bugs in the benchmark source, not the pipeline:
+
+- **Illegal non-constant global initializer** — `c/VeriMAP/TRACER-testloop12_VeriMAP_true/`:
+  `int x = unknown();` at file scope (a function call isn't a compile-time constant);
+  moved into `main()`.
+- **Missing `__VERIFIER_nondet_char` definition** — added to `include/verification.h`
+  (called by `sv-benchmarks/misc/pals_*`, but only `_int`/`_long`/`_uint`/`_bool`
+  existed).
+- **Uninitialized variables from a disabled/missing nondet-init line** — `fig1.c`,
+  `fig1.v.c`, `vsend.v.c`, `04.c`: a `unknown()`/`__VERIFIER_nondet_*` initializer was
+  commented out or simply absent. Restored using `unknown()`/`__VERIFIER_nondet_*`,
+  **not** a hardcoded `0` — a constant would silently narrow the proof obligation to
+  "safe only when the value happens to be that constant" instead of preserving the
+  full nondeterministic range the variable is meant to represent.
+- **Non-`noreturn` local `error()` wrapper** — `sv-benchmarks/systemc/kundu{,1,2}`,
+  `mem_slave_tlm.{1-5}`: a local `error(void)` helper called the already-`noreturn`
+  `__VERIFIER_error()` but wasn't itself marked `noreturn`, so the compiler couldn't
+  prove a following uninitialized-variable use was dead code. Marked `error()`
+  `__attribute__((noreturn))` and removed the now-dead trailing `return;`.
+- **CIL coroutine "saved state" locals** — `mem_slave_tlm.{1-5}`, `pc_sfifo_3`: locals
+  representing saved coroutine state, read on first entry before any real value had
+  been assigned. Initialized via `__VERIFIER_nondet_int()` (matching each file's own
+  existing convention) for the same soundness reason as above, not `0`.
+- **Out-of-bounds fill loop** — `c/pie/ICE/benchmarks/vsend.v/vsend.v.c`: a loop meant
+  to nondet-fill `char in[11]` wrote to the constant index `in[11]` (one past the end,
+  and never touching `in[0..10]`) instead of `in[i]`.
+
+## Benchmarks removed (no loop or recursion)
+
+`dagger/ex2.c` and `c/VeriMAP/TRACER-test1-unsafe_VeriMAP_false/` were removed: both
+are bounded case-split programs with no loop and no recursion (checked with a
+lightweight script — `for`/`while`/`do` keywords, backward `goto`, and a call-graph
+cycle check across each file's own functions, the last of which is needed to catch
+*mutual* recursion like `isOdd`/`isEven`-style pairs, not just direct self-calls).
+Loop-free, recursion-free C produces an **acyclic** Horn-clause system: solvable by
+inlining every clause into one formula and making a single SMT call, with no
+fixed-point/invariant inference required — i.e. these don't exercise the capability
+CHC solving exists to test. The same script confirmed no other benchmark in the
+corpus lacks both a loop and recursion.
+
 ## Compiling a benchmark for BASIL
 
 Pass `-D__BASIL__` and force-include the header. Verified with both compilers, at
@@ -107,6 +151,42 @@ is not correctly recognized as non-returning by BASIL — the CFG isn't cut afte
 call, only after ones inside `main` (see `replaceJumpsInNonReturningProcs` in
 `src/main/scala/ir/transforms/Simp.scala`). This can produce spurious verification
 failures for benchmarks calling `exit()` from a helper function.
+
+## Known BASIL bugs affecting verification-stage results
+
+With the compile-stage fixes above, `preprocess` and all 5 compile variants now
+succeed 100% of the time; every remaining failure is BASIL itself crashing on a hard
+`assert`/`???` during the `basil` (`java -jar ...`) pipeline stage, not a benchmark or
+compiler problem. Two distinct bugs account for nearly all of them:
+
+1. **Spurious "uninitialized register" assertion — hits every variant.**
+   `assert(ir.invariant.readUninitialised(ctx.program))` in
+   `src/main/scala/ir/transforms/SimplifyPipeline.scala:59` fires because register
+   **R29** (the AArch64 frame pointer) is flagged as read-before-defined — typically
+   in a function prologue's `stp x29, ...` inside `__VERIFIER_assert`/`main`/
+   `test_entry` blocks. Likely cause: commit `4efcd277` ("CalleePreservedParam bug
+   fix (#632)") newly activates handling for callee-saved registers R19-R29 that was
+   previously dead code (due to a bug); the `CalleePreservedParam` transform drops
+   the explicit call-site definition for a preserved register in favor of an
+   `Assert(input == output)` equality, without inserting a real IR def — if nothing
+   downstream re-establishes one, `ReadUninitialised`'s single-pass (non-fixpoint)
+   check can see the later read as undefined. **Unconfirmed** — worth testing against
+   a BASIL build from just before `4efcd277` to verify. This is the dominant failure
+   mode in every variant: **100% of `gcc_O0` (573/573), `gcc_O2` (414/414), and
+   `gcc_O2_fwrapv` (417/417)** basil-stage failures, 573/575 (99.7%) of `clang_O0`'s,
+   and 683/966 (70.7%) of `clang_O2`'s.
+2. **`IntervalDSA.globalIntervals` assertion — `clang_O2`-specific.** An assertion in
+   `src/main/scala/analysis/data_structure_analysis/IntervalDSA.scala:1533`
+   (`globalIntervals`) accounts for 272/966 (28.2%) of `clang_O2`'s basil-stage
+   failures, and does not occur even once across every other variant's failure logs
+   — i.e. this isn't a general BASIL bug, it's specific to something in `clang -O2`'s
+   codegen (vectorization, addressing-mode selection, and jump tables are the likely
+   suspects) interacting badly with BASIL's data-structure analysis
+   (`--dsa= --dsa-split --dsa-checks`). This area has had a cluster of recent bug-fix
+   commits (`interval-dsa-recursion-fix`, `interval-dsa-bounds-check-fix`,
+   `dsa-ssc-fixes`, PRs #428/#612/#613), consistent with `clang_O2` still having
+   unresolved edge cases — and is the main reason `clang_O2`'s pass rate (346/1314,
+   26%) sits so far below every other variant (56-68%).
 
 ## Running a benchmark through UAutomizer directly (source-level, no `-D__BASIL__`)
 
