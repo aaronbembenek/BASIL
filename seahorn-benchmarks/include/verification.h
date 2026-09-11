@@ -1,5 +1,13 @@
 #pragma once
 
+__attribute__((noinline)) int __VERIFIER_nondet_int();
+__attribute__((noinline)) long __VERIFIER_nondet_long();
+__attribute__((noinline)) unsigned int __VERIFIER_nondet_uint();
+__attribute__((noinline)) int __VERIFIER_nondet_bool();
+__attribute__((noinline)) char __VERIFIER_nondet_char();
+__attribute__((noinline, noreturn)) void __VERIFIER_error();
+__attribute__((noinline)) void __VERIFIER_assume(int e);
+
 #ifdef __BASIL__
 
 volatile int __NONDET_INT;
