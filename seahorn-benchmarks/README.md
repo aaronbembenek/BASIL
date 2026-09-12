@@ -110,6 +110,30 @@ Every remaining benchmark now compiles cleanly under all 5 variants (`gcc`/`clan
   to nondet-fill `char in[11]` wrote to the constant index `in[11]` (one past the end,
   and never touching `in[0..10]`) instead of `in[i]`.
 
+### Disabled allocations that stored through NULL (`product-lines`)
+
+All 597 `sv-benchmarks/product-lines` benchmarks have two CIL-generated functions whose
+`malloc` was disabled — `__utac__exception__cf_handler_set` (`malloc(24UL)`) and
+`__utac__error_stack_mgt` (`malloc(16UL)`). Both were left as `tmp = 0;` and then store
+through `tmp`, which is a guaranteed NULL store.
+
+This compiled fine but broke the binary pipeline. `clang -O2` proves the store in
+`__utac__exception__cf_handler_set` is unconditionally undefined, folds the entire body
+to `unreachable`, and emits a **zero-size** `FUNC` symbol whose `st_value` lands on the
+start of the next live function. That tripped BASIL in two places at once: `ddisasm`
+never registered a function for the bodyless symbol, so `getFunctionEntries` threw
+`NoSuchElementException`; and once that was worked around, the zero-width interval
+collided with its neighbour in `IntervalDSA.globalIntervals`. `gcc -O2` doesn't exploit
+the UB, which is why the failure was `clang_O2`-only.
+
+Both functions are **dead** — zero call sites anywhere in the corpus, and their addresses
+are never taken — so the undefined behaviour was unreachable and only ever mattered to
+codegen. Each file now declares `static unsigned long __basil_dead_alloc[4];` (32B,
+8-byte aligned; covers the 24B and 16B uses) and points both sites at it. Since the
+functions are unreachable, BASIL strips them before analysis and the buffer never
+reaches the memory-region analysis — verified: it appears nowhere in the generated
+`.bpl`, and the resulting CHCs contain no array-sorted variables, `select`s or `store`s.
+
 ## Benchmarks removed (no loop or recursion)
 
 `dagger/ex2.c` and `c/VeriMAP/TRACER-test1-unsafe_VeriMAP_false/` were removed: both
@@ -189,41 +213,56 @@ call, only after ones inside `main` (see `replaceJumpsInNonReturningProcs` in
 `src/main/scala/ir/transforms/Simp.scala`). This can produce spurious verification
 failures for benchmarks calling `exit()` from a helper function.
 
-## Known BASIL bugs affecting verification-stage results
+## Current results and remaining BASIL bugs
 
-With the compile-stage fixes above, `preprocess` and all 5 compile variants now
-succeed 100% of the time; every remaining failure is BASIL itself crashing on a hard
-`assert`/`???` during the `basil` (`java -jar ...`) pipeline stage, not a benchmark or
-compiler problem. Two distinct bugs account for nearly all of them:
+These numbers are measured against this branch, whose `src/` is byte-identical to BASIL
+commit `de7f516d`. `preprocess` and all 5 compile variants succeed 100% of the time;
+every remaining failure is BASIL itself crashing during the `basil` (`java -jar ...`)
+stage, not a benchmark or compiler problem.
 
-1. **Spurious "uninitialized register" assertion — hits every variant.**
-   `assert(ir.invariant.readUninitialised(ctx.program))` in
-   `src/main/scala/ir/transforms/SimplifyPipeline.scala:59` fires because register
-   **R29** (the AArch64 frame pointer) is flagged as read-before-defined — typically
-   in a function prologue's `stp x29, ...` inside `__VERIFIER_assert`/`main`/
-   `test_entry` blocks. Likely cause: commit `4efcd277` ("CalleePreservedParam bug
-   fix (#632)") newly activates handling for callee-saved registers R19-R29 that was
-   previously dead code (due to a bug); the `CalleePreservedParam` transform drops
-   the explicit call-site definition for a preserved register in favor of an
-   `Assert(input == output)` equality, without inserting a real IR def — if nothing
-   downstream re-establishes one, `ReadUninitialised`'s single-pass (non-fixpoint)
-   check can see the later read as undefined. **Unconfirmed** — worth testing against
-   a BASIL build from just before `4efcd277` to verify. This is the dominant failure
-   mode in every variant: **100% of `gcc_O0` (573/573), `gcc_O2` (407/407), and
-   `gcc_O2_fwrapv` (410/410)** basil-stage failures, 573/575 (99.7%) of `clang_O0`'s,
-   and 674/956 (70.5%) of `clang_O2`'s.
-2. **`IntervalDSA.globalIntervals` assertion — `clang_O2`-specific.** An assertion in
-   `src/main/scala/analysis/data_structure_analysis/IntervalDSA.scala:1533`
-   (`globalIntervals`) accounts for 272/956 (28.5%) of `clang_O2`'s basil-stage
-   failures, and does not occur even once across every other variant's failure logs
-   — i.e. this isn't a general BASIL bug, it's specific to something in `clang -O2`'s
-   codegen (vectorization, addressing-mode selection, and jump tables are the likely
-   suspects) interacting badly with BASIL's data-structure analysis
-   (`--dsa= --dsa-split --dsa-checks`). This area has had a cluster of recent bug-fix
-   commits (`interval-dsa-recursion-fix`, `interval-dsa-bounds-check-fix`,
-   `dsa-ssc-fixes`, PRs #428/#612/#613), consistent with `clang_O2` still having
-   unresolved edge cases — and is the main reason `clang_O2`'s pass rate (345/1303,
-   26%) sits so far below every other variant (56-69%).
+| Variant | Succeeds |
+|---|---|
+| `gcc_O0` | 1263/1303 (97%) |
+| `clang_O0` | 1265/1303 (97%) |
+| `gcc_O2` | 1184/1303 (91%) |
+| `gcc_O2_fwrapv` | 1182/1303 (91%) |
+| `clang_O2` | 1218/1303 (93%) |
+| **total** | **6112/6515 (94%)** |
+
+### The remaining 403 failures are almost entirely one subsystem
+
+**376 of 403 (93%) are in the interval data-structure analysis** (`--dsa= --dsa-split
+--dsa-checks`), concentrated in a few assertions:
+
+| Site | Count |
+|---|---|
+| `IntervalDSA.checkMemoryAccesses` | 294 |
+| `IntervalGraph.localCorrectness` | 65 |
+| `SymValues.exprToSymValSet` (`NotImplementedError`) | 11 |
+| `IntervalNode.clone`, `resolveGlobalOverlapping` | 5 |
+
+The remaining 27 are scattered: `ir.CallGraph.pred` (9), `ReplaceReturn`'s
+`establishProcedureDiamondForm` (8), 11 `StackOverflowError`s from deep recursion, and 4
+timeouts. By category the failures sit mostly in `sv-benchmarks/product-lines` (231),
+`c/recursions/recursive-simple` (61) and `sv-benchmarks/systemc` (54) — i.e. recursion-
+and struct-heavy code, which is consistent with a DSA-side limitation rather than many
+unrelated bugs.
+
+### Note on BASIL version
+
+An earlier revision of this document described two dominant failure modes — a spurious
+`readUninitialised` R29 assertion in `SimplifyPipeline`, and an
+`IntervalDSA.globalIntervals` overlap assertion. **Neither can occur on this branch.**
+The `readUninitialised` check is introduced by upstream commit `9545402e` ("Translation
+validator"), and the R29 behaviour that trips it by `4efcd277` ("CalleePreservedParam bug
+fix"); both post-date `de7f516d` and are not present here. The `globalIntervals`
+collision was real but was caused by the benchmark-side NULL-store UB documented above,
+and is fixed at the source rather than in BASIL.
+
+If you move this branch forward onto a newer BASIL, expect those failure modes to
+reappear — the R29 one alone accounted for over a thousand failures, and
+`--assert-callee-saved never` does **not** suppress it (verified: identical failure with
+and without the flag).
 
 ## Running a benchmark through UAutomizer directly (source-level, no `-D__BASIL__`)
 
