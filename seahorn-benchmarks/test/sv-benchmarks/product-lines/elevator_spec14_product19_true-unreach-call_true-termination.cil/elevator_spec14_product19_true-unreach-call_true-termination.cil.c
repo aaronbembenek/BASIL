@@ -1683,6 +1683,7 @@ __assert_fail(char const *__assertion, char const *__file, unsigned int __line,
 extern __attribute__((__nothrow__)) void *malloc(size_t __size)
     __attribute__((__malloc__));
 extern __attribute__((__nothrow__)) void free(void *__ptr);
+static unsigned long __basil_dead_alloc[4];
 void __utac__exception__cf_handler_set(void *exception,
                                        int (*cflow_func)(int, int), int val) {
   struct __UTAC__EXCEPTION *excep;
@@ -1705,7 +1706,7 @@ void __utac__exception__cf_handler_set(void *exception,
   {
     {
       excep = (struct __UTAC__EXCEPTION *)exception;
-      tmp = 0; // tmp = malloc(24UL);
+      tmp = (void *)__basil_dead_alloc; // was: tmp = malloc(24UL);
       cf = (struct __UTAC__CFLOW_FUNC *)tmp;
       mem_15 = (int (**)(int, int))cf;
       *mem_15 = cflow_func;
@@ -1876,7 +1877,7 @@ void *__utac__error_stack_mgt(void *env, int mode, int count) {
     }
     if (mode == 0) {
       {
-        tmp = 0; // tmp = malloc(16UL);
+        tmp = (void *)__basil_dead_alloc; // was: tmp = malloc(16UL);
         new = (struct __ACC__ERR *)tmp;
         mem_18 = (void **)new;
         *mem_18 = env;
