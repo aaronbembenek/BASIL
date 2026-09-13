@@ -147,6 +147,44 @@ fixed-point/invariant inference required — i.e. these don't exercise the capab
 CHC solving exists to test. The same script confirmed no other benchmark in the
 corpus lacks both a loop and recursion.
 
+## Benchmarks omitted (not in verification-friendly form)
+
+This suite was extended with **124 benchmarks recovered from the upstream
+[LinearArbitrary-SeaHorn](https://github.com/GaloisInc/LinearArbitrary-SeaHorn) repository**
+that were absent here (after excluding files already present under a `.i`→`.c` rename, the
+duplicates documented above, and the loop-free programs documented above).
+
+A further **20 candidates were omitted because they do not compile.** In every case the blocker
+is in the benchmark source itself — a missing dependency that upstream never shipped — not in
+BASIL or in this pipeline:
+
+| Cause | Files | Detail |
+|---|---|---|
+| Unimplemented kernel APIs | 14 | All of `sv-benchmarks/ntdrivers` plus 4 driver benchmarks in `sv-benchmarks/misc`. They call Windows WDM entry points (`MmProbeAndLockPages`, `KfAcquireSpinLock`, `InterlockedExchange`, `IoAcquireCancelSpinLock`, …) or Linux kernel ones (`__kmalloc`, `dev_get_drvdata`, `platform_driver_register`, …) that are declared but defined nowhere. Written to be fed to a static analyzer that treats them as opaque externals; they were never meant to link. |
+| busybox-derived utilities | 5 | `chmod`, `cp-incomplete`, `mkdir`, `uudecode`, `yes`. Each has `#include <stdarg.h>` commented out while still calling `va_start`/`va_end`, so those become undefined symbols; `chmod` additionally uses `__type_of__`, which is not standard C. Each also builds `argv` dynamically via `malloc((argc+1)*sizeof(char*))`. |
+| Incomplete upstream source | 1 | `fragtest.c` calls `rand_shuffle`, which is defined nowhere in the upstream repository — it appears to have been extracted from a larger multi-file test without its companion source. |
+
+**What this does and does not tell us.** Because these programs fail before they produce a
+binary, they never reach BASIL at all — so this says *nothing* about whether BASIL could verify
+them. It is not evidence that they would have worked, and it is not evidence that they would
+have failed. Several would plausibly be hard: the busybox utilities construct `argv` with a
+nondeterministically-sized allocation and then index it at a nondeterministic offset, which is
+the kind of code the interval DSA already struggles with elsewhere in this corpus. But that is
+an untested conjecture — we simply cannot run the experiment on these inputs.
+
+Getting them to compile would mean fabricating source upstream never provided (a `rand_shuffle`
+implementation) or writing substantial fake kernel-model stub libraries for two different
+kernels, either of which would change what the benchmark actually verifies. We judged that a
+worse outcome than omitting them, having made a good-faith effort to recreate the original
+suite. Per-benchmark evidence, including the investigation of each failure, is recorded in
+[`BACKFILL_FAILURES.md`](BACKFILL_FAILURES.md).
+
+One backfilled benchmark is deliberately **kept** despite failing: `mochi/McCarthy9103` compiles
+under all 5 variants and fails only at the `basil` stage on the two `-O0` variants, via the
+already-known `IntervalGraph.localCorrectness` DSA assertion. That is a BASIL limitation, not a
+benchmark defect, so it belongs in the suite alongside the other benchmarks that surface real
+bugs.
+
 ## Compiling a benchmark for BASIL
 
 Pass `-D__BASIL__` and force-include the header. Verified with both compilers, at
@@ -220,24 +258,27 @@ commit `de7f516d`. `preprocess` and all 5 compile variants succeed 100% of the t
 every remaining failure is BASIL itself crashing during the `basil` (`java -jar ...`)
 stage, not a benchmark or compiler problem.
 
+Measured over all **1427** benchmarks (1303 original + 124 recovered from upstream, per
+"Benchmarks omitted" above).
+
 | Variant | Succeeds |
 |---|---|
-| `gcc_O0` | 1263/1303 (97%) |
-| `clang_O0` | 1265/1303 (97%) |
-| `gcc_O2` | 1184/1303 (91%) |
-| `gcc_O2_fwrapv` | 1182/1303 (91%) |
-| `clang_O2` | 1218/1303 (93%) |
-| **total** | **6112/6515 (94%)** |
+| `gcc_O0` | 1386/1427 (97%) |
+| `clang_O0` | 1388/1427 (97%) |
+| `gcc_O2` | 1308/1427 (92%) |
+| `gcc_O2_fwrapv` | 1306/1427 (92%) |
+| `clang_O2` | 1342/1427 (94%) |
+| **total** | **6730/7135 (94%)** |
 
-### The remaining 403 failures are almost entirely one subsystem
+### The remaining 405 failures are almost entirely one subsystem
 
-**376 of 403 (93%) are in the interval data-structure analysis** (`--dsa= --dsa-split
+**378 of 405 (93%) are in the interval data-structure analysis** (`--dsa= --dsa-split
 --dsa-checks`), concentrated in a few assertions:
 
 | Site | Count |
 |---|---|
 | `IntervalDSA.checkMemoryAccesses` | 294 |
-| `IntervalGraph.localCorrectness` | 65 |
+| `IntervalGraph.localCorrectness` | 67 |
 | `SymValues.exprToSymValSet` (`NotImplementedError`) | 11 |
 | `IntervalNode.clone`, `resolveGlobalOverlapping` | 5 |
 
@@ -247,6 +288,10 @@ timeouts. By category the failures sit mostly in `sv-benchmarks/product-lines` (
 `c/recursions/recursive-simple` (61) and `sv-benchmarks/systemc` (54) — i.e. recursion-
 and struct-heavy code, which is consistent with a DSA-side limitation rather than many
 unrelated bugs.
+
+The backfill contributed only 2 of the 405 failures — both `mochi/McCarthy9103`
+(`IntervalGraph.localCorrectness`, `-O0` variants only), which is why that row moved from 65 to
+67. Every other recovered benchmark passes all 6 jobs.
 
 ### Note on BASIL version
 
