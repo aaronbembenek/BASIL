@@ -39,8 +39,9 @@ descriptive/canonical name:
    Note: the `hola/04`/`demo/08` pair was missed by the original pass above and was
    only caught on a later re-run of this same check — the pair existed since the
    corpus's initial commit, so it isn't a duplicate introduced by any later addition
-   to the benchmark set. Its removal post-dates the "Current results" measurements
-   below, which were taken over 1427 benchmarks; the corpus is now 1426.
+   to the benchmark set. `demo/08` succeeded on all 5 compile variants and the
+   `basil` stage, so its removal simply reduces every success count in "Current
+   results" below by 1 (the "Current results" numbers already reflect its removal).
 
    Note: this corpus (particularly `c/VeriMAP` and `c/pie`) also contains many
    benchmarks that are deliberately *near*-identical but not true duplicates (e.g.
@@ -265,17 +266,17 @@ commit `de7f516d`. `preprocess` and all 5 compile variants succeed 100% of the t
 every remaining failure is BASIL itself crashing during the `basil` (`java -jar ...`)
 stage, not a benchmark or compiler problem.
 
-Measured over all **1427** benchmarks (1303 original + 124 recovered from upstream, per
+Measured over all **1426** benchmarks (1302 original + 124 recovered from upstream, per
 "Benchmarks omitted" above).
 
 | Variant | Succeeds |
 |---|---|
-| `gcc_O0` | 1386/1427 (97%) |
-| `clang_O0` | 1388/1427 (97%) |
-| `gcc_O2` | 1308/1427 (92%) |
-| `gcc_O2_fwrapv` | 1306/1427 (92%) |
-| `clang_O2` | 1342/1427 (94%) |
-| **total** | **6730/7135 (94%)** |
+| `gcc_O0` | 1385/1426 (97%) |
+| `clang_O0` | 1387/1426 (97%) |
+| `gcc_O2` | 1307/1426 (92%) |
+| `gcc_O2_fwrapv` | 1305/1426 (92%) |
+| `clang_O2` | 1341/1426 (94%) |
+| **total** | **6725/7130 (94%)** |
 
 ### The remaining 405 failures are almost entirely one subsystem
 
