@@ -25,7 +25,7 @@ descriptive/canonical name:
 2. **Preprocessed** (`gcc -E -P -I include -include include/verification.h`, then
    hash the output) — more precise than a raw hash since it's insensitive to
    comments/whitespace/leftover line-marker text while still being an exact,
-   deterministic comparison (no fuzzy matching). Found 4 further pairs whose raw
+   deterministic comparison (no fuzzy matching). Found 5 further pairs whose raw
    source differed only in such cosmetic content:
 
    | kept | removed | raw source differed only by |
@@ -34,6 +34,13 @@ descriptive/canonical name:
    | `test/c/VeriMAP/TRACER-testabs7_VeriMAP_true/` | `test/c/VeriMAP/TRACER-testabs13_VeriMAP_true/` | embedded `# N "....tmp.c"` line-marker comments |
    | `test/c/VeriMAP/TRACER-testabs3_VeriMAP_true/` | `test/c/VeriMAP/TRACER-testwp4_VeriMAP_true/` | embedded `# N "....tmp.c"` line-marker comments |
    | `test/c/VeriMAP/TRACER-testabs1_VeriMAP_true/` | `test/c/VeriMAP/TRACER-testabs6_VeriMAP_true/` | embedded `# N "....tmp.c"` line-marker comments |
+   | `test/c/pie/hola/04/` | `test/demo/08/` | an attribution comment (`Taken from Gulwani PLDI'08: Program Analysis as Constraint Solving`) and a trailing newline |
+
+   Note: the `hola/04`/`demo/08` pair was missed by the original pass above and was
+   only caught on a later re-run of this same check — the pair existed since the
+   corpus's initial commit, so it isn't a duplicate introduced by any later addition
+   to the benchmark set. Its removal post-dates the "Current results" measurements
+   below, which were taken over 1427 benchmarks; the corpus is now 1426.
 
    Note: this corpus (particularly `c/VeriMAP` and `c/pie`) also contains many
    benchmarks that are deliberately *near*-identical but not true duplicates (e.g.
