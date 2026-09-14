@@ -17,7 +17,7 @@ descriptive/canonical name:
 
    | kept | removed |
    |---|---|
-   | `test/c/pie/ICE/benchmarks/veris.c_sendmail__tTflag_arr_one_loop_safe/` | `test/c/pie/ICE/benchmarks/vsend/` |
+   | `test/c/pie/ICE/benchmarks/veris.c_sendmail__tTflag_arr_one_loop_safe/` (itself later removed; see item 4 below) | `test/c/pie/ICE/benchmarks/vsend/` |
    | `test/c/pie/ICE/benchmarks/trex03_safe/` | `test/c/pie/ICE/benchmarks/trex03/` |
    | `test/c/recursions/recursive/Fibonacci01_true-unreach-call_true-no-overflow/` | `test/demo/fibo/` |
    | `test/demo/19/` | `test/demo/28/` |
@@ -87,6 +87,24 @@ descriptive/canonical name:
    that inspects the assert condition directly, could legitimately treat the two
    differently, so compiled-binary identity alone isn't sufficient grounds for removal.
 
+4. **Manual source review** — found 1 further pair that none of the hash checks above
+   could catch, because the removed copy is an *incorrect* version of the kept one
+   rather than a cosmetic variant of it:
+
+   | kept | removed | raw source differed only by |
+   |---|---|---|
+   | `test/c/pie/ICE/benchmarks/vsend.v/` (itself later removed; arrays out of scope — see "Benchmarks removed (arrays out of scope)" below) | `test/c/pie/ICE/benchmarks/veris.c_sendmail__tTflag_arr_one_loop_safe/` | no nondet fill loop for `char in[11]`, so the digit-parsing loop reads uninitialized elements; no unused `v1..v3` `__VERIFIER_nondet_int()` calls; an unused `__VERIFIER_assert1` helper calling `__VERIFIER_error()` instead of looping on `goto ERROR` |
+
+   Note: the originally committed `vsend.v.c` had the same missing-initialization bug; it
+   was fixed there (see the "Uninitialized variables" and "Out-of-bounds fill loop" items
+   under "Compile-stage fixes" below), but the `veris` copy never got that fix, since
+   `-Werror=uninitialized` doesn't flag reads of uninitialized array elements. (`vsend.v`
+   itself was subsequently removed as well, since it uses an array; see "Benchmarks
+   removed (arrays out of scope)" below.) The
+   `veris` benchmark succeeded on all 5 compile variants and the `basil` stage, so its
+   removal simply reduces every success count in "Current results" below by 1 (the
+   "Current results" numbers already reflect its removal).
+
 ## Compile-stage fixes
 
 Every remaining benchmark now compiles cleanly under all 5 variants (`gcc`/`clang` ×
@@ -100,7 +118,8 @@ Every remaining benchmark now compiles cleanly under all 5 variants (`gcc`/`clan
   (called by `sv-benchmarks/misc/pals_*`, but only `_int`/`_long`/`_uint`/`_bool`
   existed).
 - **Uninitialized variables from a disabled/missing nondet-init line** — `fig1.c`,
-  `fig1.v.c`, `vsend.v.c`, `04.c`: a `unknown()`/`__VERIFIER_nondet_*` initializer was
+  `fig1.v.c`, `vsend.v.c` (benchmark since removed; see "Benchmarks removed (arrays out of
+  scope)"), `04.c`: a `unknown()`/`__VERIFIER_nondet_*` initializer was
   commented out or simply absent. Restored using `unknown()`/`__VERIFIER_nondet_*`,
   **not** a hardcoded `0` — a constant would silently narrow the proof obligation to
   "safe only when the value happens to be that constant" instead of preserving the
@@ -114,7 +133,8 @@ Every remaining benchmark now compiles cleanly under all 5 variants (`gcc`/`clan
   representing saved coroutine state, read on first entry before any real value had
   been assigned. Initialized via `__VERIFIER_nondet_int()` (matching each file's own
   existing convention) for the same soundness reason as above, not `0`.
-- **Out-of-bounds fill loop** — `c/pie/ICE/benchmarks/vsend.v/vsend.v.c`: a loop meant
+- **Out-of-bounds fill loop** — `c/pie/ICE/benchmarks/vsend.v/vsend.v.c` (benchmark since
+  removed; see "Benchmarks removed (arrays out of scope)"): a loop meant
   to nondet-fill `char in[11]` wrote to the constant index `in[11]` (one past the end,
   and never touching `in[0..10]`) instead of `in[i]`.
 
@@ -154,6 +174,33 @@ inlining every clause into one formula and making a single SMT call, with no
 fixed-point/invariant inference required — i.e. these don't exercise the capability
 CHC solving exists to test. The same script confirmed no other benchmark in the
 corpus lacks both a loop and recursion.
+
+## Benchmarks removed (arrays out of scope)
+
+`c/pie/ICE/benchmarks/vsend.v/` was removed because it uses an array (`char in[11]`,
+filled with nondeterministic values and then read), and arrays are out of scope for
+this suite.
+
+This came up through gcc's stack protector. Ubuntu's `aarch64-linux-gnu-gcc` enables
+`-fstack-protector-strong` by default (clang-14 does not), which instruments any
+function with a local array with a stack-canary check that calls glibc's
+`__stack_chk_fail` on a mismatch. That function has no code in the binary, so BASIL
+lifts it as a body-less `procedure p$__stack_chk_fail();`, which BASIL-infer's CHC
+translation does not support. In the other benchmarks where this happened, the array
+played no role in the verified property, so the array was commented out instead of
+removing the benchmark:
+
+- `c/pie/ICE/benchmarks/n_c11/`, `n_c11n/`, `n_c11n.v/`: `int a[5];` was declared but
+  never used.
+- `c/pie/ICE/benchmarks/ex14/`: `int a[10];` was only ever written (`a[y] = -1;`, now
+  also commented out) and never read; the bounds check on `y` that guarded the write is
+  kept.
+
+After the change, all 5 variants of each of these 4 benchmarks were rebuilt and still
+succeed; none of the new builds reference `__stack_chk_fail` or contain a body-less
+procedure. `vsend.v` succeeded on all 5 compile variants and the `basil` stage, so its
+removal simply reduces every success count in "Current results" below by 1 (the
+"Current results" numbers already reflect its removal).
 
 ## Benchmarks omitted (not in verification-friendly form)
 
@@ -266,17 +313,17 @@ commit `de7f516d`. `preprocess` and all 5 compile variants succeed 100% of the t
 every remaining failure is BASIL itself crashing during the `basil` (`java -jar ...`)
 stage, not a benchmark or compiler problem.
 
-Measured over all **1426** benchmarks (1302 original + 124 recovered from upstream, per
+Measured over all **1424** benchmarks (1300 original + 124 recovered from upstream, per
 "Benchmarks omitted" above).
 
 | Variant | Succeeds |
 |---|---|
-| `gcc_O0` | 1385/1426 (97%) |
-| `clang_O0` | 1387/1426 (97%) |
-| `gcc_O2` | 1307/1426 (92%) |
-| `gcc_O2_fwrapv` | 1305/1426 (92%) |
-| `clang_O2` | 1341/1426 (94%) |
-| **total** | **6725/7130 (94%)** |
+| `gcc_O0` | 1383/1424 (97%) |
+| `clang_O0` | 1385/1424 (97%) |
+| `gcc_O2` | 1305/1424 (92%) |
+| `gcc_O2_fwrapv` | 1303/1424 (92%) |
+| `clang_O2` | 1339/1424 (94%) |
+| **total** | **6715/7120 (94%)** |
 
 ### The remaining 405 failures are almost entirely one subsystem
 

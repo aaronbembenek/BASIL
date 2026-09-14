@@ -12,7 +12,7 @@ void __VERIFIER_assert1(int cond) {
 int main() {
 
   int x, y;
-  int a[10];
+  // int a[10];
   x = 1;
 
   while (x <= 10) {
@@ -21,7 +21,7 @@ int main() {
     if (y < 0 || y >= 10)
       __VERIFIER_assert(0 == 1);
 
-    a[y] = -1;
+    // a[y] = -1;
     x++;
   }
 

@@ -11,7 +11,7 @@ void __VERIFIER_assert1(int cond) {
 
 void main() {
 
-  int a[5];
+  // int a[5];
   int len = 0;
   int i, N;
   int input = __VERIFIER_nondet_int();
