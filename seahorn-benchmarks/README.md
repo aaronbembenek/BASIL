@@ -202,6 +202,15 @@ procedure. `vsend.v` succeeded on all 5 compile variants and the `basil` stage, 
 removal simply reduces every success count in "Current results" below by 1 (the
 "Current results" numbers already reflect its removal).
 
+Separately, `c/pie/ICE/benchmarks/ex23/` and `ex23.v/` declare a global `int x[4608];`
+that is only ever written (`x[z] = 0;`) and never read — the property only checks that
+`z` stays in bounds. Being a global, it doesn't trigger the stack protector, but the
+write made the CHCs of their `-O0` builds use arrays (which BASIL-infer's CHC translation
+rejects), so the declaration and the write were commented out in both; the bounds check
+on `z` is kept. As a side effect, their 6 `-O2` builds, which previously failed at the
+`basil` stage in `IntervalDSA.checkMemoryAccesses` on that write, now succeed too (the
+"Current results" numbers below already reflect this).
+
 ## Benchmarks omitted (not in verification-friendly form)
 
 This suite was extended with **124 benchmarks recovered from the upstream
@@ -320,19 +329,19 @@ Measured over all **1424** benchmarks (1300 original + 124 recovered from upstre
 |---|---|
 | `gcc_O0` | 1383/1424 (97%) |
 | `clang_O0` | 1385/1424 (97%) |
-| `gcc_O2` | 1305/1424 (92%) |
-| `gcc_O2_fwrapv` | 1303/1424 (92%) |
-| `clang_O2` | 1339/1424 (94%) |
-| **total** | **6715/7120 (94%)** |
+| `gcc_O2` | 1307/1424 (92%) |
+| `gcc_O2_fwrapv` | 1305/1424 (92%) |
+| `clang_O2` | 1341/1424 (94%) |
+| **total** | **6721/7120 (94%)** |
 
-### The remaining 405 failures are almost entirely one subsystem
+### The remaining 399 failures are almost entirely one subsystem
 
-**378 of 405 (93%) are in the interval data-structure analysis** (`--dsa= --dsa-split
+**372 of 399 (93%) are in the interval data-structure analysis** (`--dsa= --dsa-split
 --dsa-checks`), concentrated in a few assertions:
 
 | Site | Count |
 |---|---|
-| `IntervalDSA.checkMemoryAccesses` | 294 |
+| `IntervalDSA.checkMemoryAccesses` | 288 |
 | `IntervalGraph.localCorrectness` | 67 |
 | `SymValues.exprToSymValSet` (`NotImplementedError`) | 11 |
 | `IntervalNode.clone`, `resolveGlobalOverlapping` | 5 |
@@ -344,7 +353,7 @@ timeouts. By category the failures sit mostly in `sv-benchmarks/product-lines` (
 and struct-heavy code, which is consistent with a DSA-side limitation rather than many
 unrelated bugs.
 
-The backfill contributed only 2 of the 405 failures — both `mochi/McCarthy9103`
+The backfill contributed only 2 of the 399 failures — both `mochi/McCarthy9103`
 (`IntervalGraph.localCorrectness`, `-O0` variants only), which is why that row moved from 65 to
 67. Every other recovered benchmark passes all 6 jobs.
 

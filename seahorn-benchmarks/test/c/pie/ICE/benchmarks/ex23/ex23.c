@@ -9,7 +9,7 @@ void __VERIFIER_assert1(int cond) {
   return;
 }
 
-int x[4608];
+// int x[4608];
 
 // pre: true
 int main() {
@@ -29,7 +29,7 @@ int main() {
     if (z < 0 || z >= 4608)
       __VERIFIER_assert(0 == 1);
 
-    x[z] = 0;
+    // x[z] = 0;
     z++;
     counter++;
   }
