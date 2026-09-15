@@ -164,16 +164,65 @@ reaches the memory-region analysis — verified: it appears nowhere in the gener
 
 ## Benchmarks removed (no loop or recursion)
 
-`dagger/ex2.c` and `c/VeriMAP/TRACER-test1-unsafe_VeriMAP_false/` were removed: both
-are bounded case-split programs with no loop and no recursion (checked with a
-lightweight script — `for`/`while`/`do` keywords, backward `goto`, and a call-graph
-cycle check across each file's own functions, the last of which is needed to catch
-*mutual* recursion like `isOdd`/`isEven`-style pairs, not just direct self-calls).
 Loop-free, recursion-free C produces an **acyclic** Horn-clause system: solvable by
 inlining every clause into one formula and making a single SMT call, with no
 fixed-point/invariant inference required — i.e. these don't exercise the capability
-CHC solving exists to test. The same script confirmed no other benchmark in the
-corpus lacks both a loop and recursion.
+CHC solving exists to test. Benchmarks with neither a loop nor recursion were
+therefore removed:
+
+- `dagger/ex2.c` and `c/VeriMAP/TRACER-test1-unsafe_VeriMAP_false/`: bounded case-split
+  programs.
+- 29 more VeriMAP `TRACER` programs, all small branch-only programs:
+  `c/VeriMAP/TRACER-<name>_VeriMAP_true/` for `test1`, `test3`, `testabs1`, `testabs2`,
+  `testabs3`, `testabs9`, `testfunc1`, `testfunc3`, `testfunc11`, `testwp2`, `testwp3`,
+  `testwp5`, `testwp6`, `testwp7`, `testwp8`, `testwp9`, `testwp10`, `testwp11`,
+  `testwp12`, `testwp14`, `testwp15`, `testwp16` and `testwp17`, and
+  `c/VeriMAP/TRACER-<name>-unsafe_VeriMAP_false/` for `test3`, `testfunc1`, `testfunc9`,
+  `testfunc12`, `testwp1` and `testwp13`.
+
+The first two were found with an earlier, lightweight check (`for`/`while`/`do`
+keywords, backward `goto`, and call-graph cycles). It missed the 29 `TRACER` programs
+because every one of them defines an unused `errorFn() { ERROR: goto ERROR; }` (and
+`testwp14` an unused `__VERIFIER_assume1` with a `goto LOOP`), whose backward `goto`
+counted as a loop even though it is dead code.
+
+The check is now `scripts/check_benchmarks.py`, which only considers code reachable from
+`main`. It parses each benchmark with clang (with the same preprocessor setup as the
+build), builds the call graph from `main` over live code, and reports, per benchmark,
+whether live code has a loop (`while`/`do`/`for` or a backward `goto`), whether live
+functions are recursive (including mutual recursion, e.g. `isEven`/`isOdd`), and whether
+a call to `__VERIFIER_error` is reachable (see below). Dead code is what clang's
+`-Wunreachable-code` reports, plus code after a `return`/`goto`/`break`/`continue` or in
+a constant-false `if` branch that no live `goto` can jump into; see the script's
+docstring for the details and limitations. Run over the whole corpus after the removals
+here, it reports no benchmark without a loop or recursion, and none without an assertion.
+
+## Benchmarks removed (no reachable assertion)
+
+A benchmark whose error call can never be reached has no property to verify, so any
+verdict for it is vacuous:
+
+- `c/invgen/puzzle1/` contains no assertion at all (its `assert.h` include is commented
+  out). It does contain signed integer overflow, but that is a different property
+  (no-overflow) from the error reachability this suite checks.
+- `sv-benchmarks/psyco/psyco_math_1_true-unreach-call/` only calls `__VERIFIER_error()`
+  at an `ERROR:` label after `return 0;`, and all 19 `goto ERROR;` statements are inside
+  CIL's `if (0) { ... }` non-conformance blocks.
+
+Two benchmarks with a similar shape are kept. `sv-benchmarks/psyco/psyco_io_1_true-unreach-call/`
+also has its `ERROR:` label after `return 0;`, but 6 of its 18 `goto ERROR;` statements
+are guarded by real state conditions, so the property is genuine (it is safe only because
+those paths are infeasible). `c/llreve/loop4_merged_safe/` asserts only after a
+`while (1)` loop with no `break`, which `scripts/check_benchmarks.py` reports as an
+unreachable assertion; it is kept for the same reason as the `for_infinite_loop` and
+`while_infinite_loop` pairs under "Duplicate benchmarks" above (a deliberate SV-COMP test
+that a tool doesn't report an error it can never reach).
+
+## Benchmarks removed (incorrect expected verdict)
+
+`c/VeriMAP/TRACER-testloop5-unsafe_VeriMAP_false/` is labelled unsafe, but as written it
+is safe: in `while (foo(i) < 10) {}`, `i` is never updated (`foo(0)` always returns 1),
+so the loop never terminates and the assertion after it is unreachable.
 
 ## Benchmarks removed (arrays out of scope)
 
@@ -322,17 +371,17 @@ commit `de7f516d`. `preprocess` and all 5 compile variants succeed 100% of the t
 every remaining failure is BASIL itself crashing during the `basil` (`java -jar ...`)
 stage, not a benchmark or compiler problem.
 
-Measured over all **1424** benchmarks (1300 original + 124 recovered from upstream, per
+Measured over all **1392** benchmarks (1268 original + 124 recovered from upstream, per
 "Benchmarks omitted" above).
 
 | Variant | Succeeds |
 |---|---|
-| `gcc_O0` | 1383/1424 (97%) |
-| `clang_O0` | 1385/1424 (97%) |
-| `gcc_O2` | 1307/1424 (92%) |
-| `gcc_O2_fwrapv` | 1305/1424 (92%) |
-| `clang_O2` | 1341/1424 (94%) |
-| **total** | **6721/7120 (94%)** |
+| `gcc_O0` | 1351/1392 (97%) |
+| `clang_O0` | 1353/1392 (97%) |
+| `gcc_O2` | 1275/1392 (92%) |
+| `gcc_O2_fwrapv` | 1273/1392 (91%) |
+| `clang_O2` | 1309/1392 (94%) |
+| **total** | **6561/6960 (94%)** |
 
 ### The remaining 399 failures are almost entirely one subsystem
 
